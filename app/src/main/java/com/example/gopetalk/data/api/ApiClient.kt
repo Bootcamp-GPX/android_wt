@@ -34,18 +34,11 @@ object ApiClient {
         return retrofit.create(AuthService::class.java)
     }
 
-    fun getWebSocket(userId: String, channel: String, listener: WebSocketListener): WebSocket {
+    fun getWebSocket(userId: String, listener: WebSocketListener): WebSocket {
         val request = Request.Builder()
-            .url("ws://tu-servidor.com/ws/audio?channel=$channel&user_id=$userId")
+            .url("${Constants.WS_URL}/ws?user_id=$userId")
             .build()
 
         return okHttpClient.newWebSocket(request, listener)
     }
 }
-
-
-
-
-
-
-

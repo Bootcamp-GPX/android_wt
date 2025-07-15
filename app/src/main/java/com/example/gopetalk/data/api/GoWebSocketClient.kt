@@ -16,7 +16,7 @@ class GoWebSocketClient(private val userId: String) {
 
         disconnect() // Siempre asegurarse de cerrar conexión previa
 
-        webSocket = ApiClient.getWebSocket(userId, channel, object : WebSocketListener() {
+        webSocket = ApiClient.getWebSocket(userId, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
                 Log.d("GoWebSocketClient", "Conectado exitosamente al canal: $channel")
                 currentChannel = channel
@@ -41,14 +41,17 @@ class GoWebSocketClient(private val userId: String) {
         })
     }
 
-    fun sendAudio(audio: ByteArray) {
+    fun sendAudio(audio: ByteArray, receiverId: String) {
         if (webSocket == null) {
             Log.w("GoWebSocketClient", "Intento de enviar audio sin WebSocket conectado")
             return
         }
 
-        Log.d("GoWebSocketClient", "Enviando audio de ${audio.size} bytes al canal: $currentChannel")
-        webSocket?.send(ByteString.of(*audio))
+        val receiverBytes = receiverId.padEnd(36).toByteArray() // OJO: el backend espera 36 bytes exactos
+        val combined = receiverBytes + audio
+
+        Log.d("GoWebSocketClient", "Enviando ${combined.size} bytes a $receiverId")
+        webSocket?.send(ByteString.of(*combined))
     }
 
     fun disconnect() {
