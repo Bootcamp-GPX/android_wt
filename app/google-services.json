@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "454990796390",
+    "project_id": "gopetext",
+    "storage_bucket": "gopetext.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:454990796390:android:87ee92dc8c87558627bfa7",
+        "android_client_info": {
+          "package_name": "com.example.gopetext"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCVuCuRwFOgLHIfw5MYwFIppO2hJgp_dFg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

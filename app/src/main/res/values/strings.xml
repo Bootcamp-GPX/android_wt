@@ -1,0 +1,9 @@
+<resources>
+
+    <string name="app_name">GopeTalk</string>
+
+    <string name="menu_logout">Cerrar Sesión</string>
+    <string name="menu_profile">Cerrar Sesión</string>
+
+
+</resources>
