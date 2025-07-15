@@ -18,6 +18,8 @@ class WalkieTalkiePresenter(
     private var isRecording = false
     private var recordingJob: Job? = null
 
+    private var receiverId: String = ""
+
     private val bufferSize = AudioRecord.getMinBufferSize(
         44100,
         AudioFormat.CHANNEL_IN_MONO,
@@ -52,7 +54,7 @@ class WalkieTalkiePresenter(
                 while (isRecording && isActive) {
                     val read = recorder?.read(audioData, 0, bufferSize) ?: -1
                     if (read > 0) {
-                        api.sendAudio(audioData.copyOf(read))
+                        api.sendAudio(audioData.copyOf(read), receiverId)
                         Log.d("WalkieTalkiePresenter", "Audio enviado (${read} bytes)")
                     } else {
                         Log.w("WalkieTalkiePresenter", "Error al leer audio del micrófono: $read")
@@ -86,6 +88,7 @@ class WalkieTalkiePresenter(
 
     override fun connectToChannel(channel: String) {
         Log.d("WalkieTalkiePresenter", "Conectando al canal: $channel")
+        receiverId = channel
         api.connect(channel) { audioData ->
             Log.d("WalkieTalkiePresenter", "Audio recibido (${audioData.size} bytes)")
             CoroutineScope(Dispatchers.Main).launch {

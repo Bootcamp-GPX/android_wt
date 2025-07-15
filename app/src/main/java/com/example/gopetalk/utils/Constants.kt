@@ -2,8 +2,8 @@ package com.example.gopetalk.utils
 
 object Constants{
 
-    const val BASE_URL = "https://6f7aad4a2313.ngrok-free.app"
-    const val WS_URL = "ws://10.0.2.2:8080"
+    const val BASE_URL = "http://159.203.187.94/"
+    const val WS_URL = "ws://9394a2d3a6a6.ngrok-free.app"
 
     const val DEFAULT_SUCCESS = "Registro exitoso"
     const val UNKNOWN_ERROR = "Error desconocido del servidor"
