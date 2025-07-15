@@ -9,6 +9,7 @@ import android.media.AudioManager
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
@@ -26,6 +27,7 @@ class WalkieTalkieFragment : Fragment(), WalkieTalkieContract.View {
     private lateinit var txtChannel: EditText
     private lateinit var btnConnect: Button
     private lateinit var statusText: TextView
+    private lateinit var etReceiverId: EditText
 
     private lateinit var sessionManager: SessionManager
 
@@ -41,7 +43,7 @@ class WalkieTalkieFragment : Fragment(), WalkieTalkieContract.View {
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-
+        etReceiverId = view.findViewById(R.id.etReceiverId)
         Log.d("WalkieTalkieFragment", "onViewCreated llamado")
 
         sessionManager = SessionManager(requireContext())
@@ -79,19 +81,23 @@ class WalkieTalkieFragment : Fragment(), WalkieTalkieContract.View {
 
 
         btnTalk.setOnTouchListener { _, event ->
+            val receiverId = etReceiverId.text.toString().trim()
+
             when (event.action) {
-                android.view.MotionEvent.ACTION_DOWN -> {
-                    Log.d("WalkieTalkieFragment", "Botón presionado - Comienza grabación")
+                MotionEvent.ACTION_DOWN -> {
+                    if (receiverId.isEmpty()) {
+                        Toast.makeText(context, "Ingresa el ID del destinatario", Toast.LENGTH_SHORT).show()
+                        return@setOnTouchListener true
+                    }
                     if (checkAudioPermission()) {
                         isTalking = true
-                        presenter.startRecording()
+                        presenter.startRecording(receiverId) // 🔥 ahora se lo pasas
                         btnTalk.text = "Grabando..."
                     }
                     true
                 }
 
-                android.view.MotionEvent.ACTION_UP -> {
-                    Log.d("WalkieTalkieFragment", "Botón soltado - Termina grabación")
+                MotionEvent.ACTION_UP -> {
                     if (isTalking) {
                         isTalking = false
                         presenter.stopRecording()
@@ -99,9 +105,11 @@ class WalkieTalkieFragment : Fragment(), WalkieTalkieContract.View {
                     }
                     true
                 }
+
                 else -> false
             }
         }
+
     }
 
     private fun checkAudioPermission(): Boolean {

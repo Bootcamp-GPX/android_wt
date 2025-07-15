@@ -9,7 +9,7 @@ interface WalkieTalkieContract {
     }
 
     interface Presenter {
-        fun startRecording()
+        fun startRecording(receiverID: String)
         fun stopRecording()
         fun connectToChannel(channel: String)
     }

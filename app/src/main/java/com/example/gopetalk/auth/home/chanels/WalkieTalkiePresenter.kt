@@ -17,8 +17,8 @@ class WalkieTalkiePresenter(
     private var recorder: AudioRecord? = null
     private var isRecording = false
     private var recordingJob: Job? = null
-
     private var receiverId: String = ""
+
 
     private val bufferSize = AudioRecord.getMinBufferSize(
         44100,
@@ -27,7 +27,7 @@ class WalkieTalkiePresenter(
     )
 
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
-    override fun startRecording() {
+    override fun startRecording(receiverID: String) {
         Log.d("WalkieTalkiePresenter", "Iniciando grabación de audio")
 
         try {
