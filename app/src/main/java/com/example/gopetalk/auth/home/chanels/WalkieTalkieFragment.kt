@@ -71,8 +71,8 @@ class WalkieTalkieFragment : Fragment(), WalkieTalkieContract.View {
             if (channel.isNotEmpty()) {
                 canalSeleccionado = channel
                 Log.d("WalkieTalkieFragment", "Botón conectar presionado. Canal: $channel")
-                presenter.connectToChannel(channel)
-                Toast.makeText(context, "Conectado al canal: $channel", Toast.LENGTH_SHORT).show()
+                presenter.connectToChannel(userIdString) // Aquí ahora conectas tu propio canal para recibir
+                Toast.makeText(context, "Conectado como $userIdString", Toast.LENGTH_SHORT).show()
             } else {
                 Log.w("WalkieTalkieFragment", "Intento de conexión sin canal")
                 Toast.makeText(context, "Ingresa un canal", Toast.LENGTH_SHORT).show()
@@ -91,7 +91,7 @@ class WalkieTalkieFragment : Fragment(), WalkieTalkieContract.View {
                     }
                     if (checkAudioPermission()) {
                         isTalking = true
-                        presenter.startRecording(receiverId) // 🔥 ahora se lo pasas
+                        presenter.startRecording(receiverId)
                         btnTalk.text = "Grabando..."
                     }
                     true
