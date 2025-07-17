@@ -29,7 +29,7 @@ class HomeActivity : AppCompatActivity(), HomeContract.View {
 
         presenter = HomePresenter(
             this,
-            ApiClient.getService(),
+            ApiClient.getAuthService(),
             sessionManager
         )
 

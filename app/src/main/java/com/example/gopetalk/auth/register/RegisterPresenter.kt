@@ -1,64 +1,63 @@
 package com.example.gopetalk.auth.register
 
-import com.example.gopetalk.data.api.*
-import com.example.gopetalk.utils.Constants
-import kotlinx.coroutines.*
 import android.util.Log
+import com.example.gopetalk.data.api.ApiClient
+import com.example.gopetalk.data.api.RegisterRequest
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class RegisterPresenter(private val view: RegisterContract.View) : RegisterContract.Presenter {
 
-    private val service = ApiClient.getService()
-
     override fun register(
         name: String,
-        last_name: String,
-        age: Int,
+        lastName: String,
         email: String,
         password: String,
-        confirm_password: String
+        confirmPassword: String
     ) {
-        Log.d("RegisterPresenter", "Preparando registro...")
-        Log.d("RegisterPresenter", "Datos recibidos -> nombre: $name, apellido: $last_name, edad: $age, email: $email")
+        Log.d("RegisterPresenter", "Iniciando registro...")
+
+        // Validaciones básicas
+        if (name.isBlank() || lastName.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank()) {
+            view.showError("Por favor, completa todos los campos.")
+            return
+        }
+
+        if (password != confirmPassword) {
+            view.showError("Las contraseñas no coinciden.")
+            return
+        }
+
+        val user = RegisterRequest(
+            first_name = name,
+            last_name = lastName,
+            email = email,
+            password = password,
+            confirm_password = confirmPassword
+        )
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val request = RegisterRequest(
-                    name = name,
-                    last_name = last_name,
-                    age = age,
-                    email = email,
-                    password = password,
-                    confirm_password = confirm_password
-                )
-                Log.d("RegisterPresenter", "Enviando solicitud al servidor: $request")
-
-                val response = service.register(request)
+                val response = ApiClient.getAuthService().register(user)
 
                 withContext(Dispatchers.Main) {
-                    Log.d("RegisterPresenter", "Respuesta recibida. Código: ${response.code()}")
-
+                    view.hideLoading()
                     if (response.isSuccessful) {
-                        val message = response.body()?.message ?: Constants.DEFAULT_SUCCESS
-                        Log.d("RegisterPresenter", "Registro exitoso: $message")
-                        view.showMessage(message)
+                        Log.d("RegisterPresenter", "Registro exitoso: ${response.body()?.message}")
+                        view.showSuccess("¡Registro exitoso! Revisa tu correo para validarlo.")
+                        view.resetForm()
                     } else {
-                        val errorJson = response.errorBody()?.string()
-                        val errorResponse = ErrorUtils.parseError(errorJson)
-
-                        if (errorResponse != null) {
-                            Log.e("RegisterPresenter", "Error del servidor: ${errorResponse.error.message}")
-                            view.showRegisterFail("Error: ${errorResponse.error.message}")
-                        } else {
-                            Log.e("RegisterPresenter", "No se pudo parsear error: $errorJson")
-                            view.showRegisterFail(Constants.UNKNOWN_ERROR)
-                        }
+                        Log.e("RegisterPresenter", "Error al registrar: ${response.errorBody()?.string()}")
+                        view.showError("Error en el registro. Revisa los datos o intenta más tarde.")
                     }
                 }
-
             } catch (e: Exception) {
+                Log.e("RegisterPresenter", "Excepción al registrar", e)
                 withContext(Dispatchers.Main) {
-                    Log.e("RegisterPresenter", "Excepción capturada en registro", e)
-                    view.showRegisterFail("${Constants.NETWORK_ERROR}${e.localizedMessage}")
+                    view.hideLoading()
+                    view.showError("Ha ocurrido un error de red. Intenta más tarde.")
                 }
             }
         }

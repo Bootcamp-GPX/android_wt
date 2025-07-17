@@ -7,6 +7,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
@@ -19,8 +20,13 @@ object ApiClient {
     fun init(context: Context) {
         sessionManager = SessionManager(context)
 
+        val loggingInterceptor = HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BODY
+        }
+
         okHttpClient = OkHttpClient.Builder()
             .addInterceptor(AuthInterceptor(sessionManager))
+            .addInterceptor(loggingInterceptor)
             .build()
 
         retrofit = Retrofit.Builder()
@@ -30,15 +36,33 @@ object ApiClient {
             .build()
     }
 
-    fun getService(): AuthService {
+    private fun checkInit() {
+        if (!::retrofit.isInitialized || !::okHttpClient.isInitialized) {
+            throw IllegalStateException("ApiClient no inicializado. Llama a ApiClient.init(context) primero.")
+        }
+    }
+
+    fun getAuthService(): AuthService {
+        checkInit()
         return retrofit.create(AuthService::class.java)
     }
 
-    fun getWebSocket(userId: String, listener: WebSocketListener): WebSocket {
-        val request = Request.Builder()
-            .url("${Constants.WS_URL}/ws?user_id=$userId")
-            .build()
+    fun getChannelService(): ChannelService {
+        return retrofit.create(ChannelService::class.java)
+    }
 
-        return okHttpClient.newWebSocket(request, listener)
+    fun getWebSocket(channelName: String, userId: String, listener: WebSocketListener): WebSocket {
+        val token = sessionManager.getAccessToken()
+
+        val requestBuilder = Request.Builder()
+            .url(Constants.WS_URL)
+
+        // 🔐 Si el WebSocket requiere token, lo dejamos, si no, elimínalo.
+        if (!token.isNullOrEmpty()) {
+            requestBuilder.addHeader("Authorization", "Bearer $token")
+        }
+
+        return okHttpClient.newWebSocket(requestBuilder.build(), listener)
     }
 }
+

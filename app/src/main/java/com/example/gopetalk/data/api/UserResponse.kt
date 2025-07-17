@@ -1,9 +1,8 @@
 package com.example.gopetalk.data.api
 
-data class LoginResponse(
-    val email: String,
+data class UserResponse(
+    val id: Int,
     val first_name: String,
     val last_name: String,
-    val token: String,
-    val user_id: Int
+    val email: String
 )

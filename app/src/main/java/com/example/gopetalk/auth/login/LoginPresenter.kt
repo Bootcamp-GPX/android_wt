@@ -19,13 +19,17 @@ class LoginPresenter(
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val response = api.login(LoginRequest(email, password))
+
                 if (response.isSuccessful && response.body() != null) {
                     val body = response.body()!!
 
                     sessionManager.saveAccessToken(body.token)
                     sessionManager.saveUserId(body.user_id)
+                    sessionManager.saveUserName(body.first_name)
+                    sessionManager.saveUserLastName(body.last_name)
+                    sessionManager.saveUserEmail(body.email)
 
-                    Log.d("LoginPresenter", "Guardado userId: ${body.user_id}")
+                    Log.d("LoginPresenter", "Login exitoso: ${body.email} / ID: ${body.user_id}")
 
                     withContext(Dispatchers.Main) {
                         view.showLoginSuccess()
@@ -36,11 +40,13 @@ class LoginPresenter(
                         404 -> "Usuario no encontrado"
                         else -> "Error desconocido (${response.code()})"
                     }
+                    Log.e("LoginPresenter", "Error de login: $message")
                     withContext(Dispatchers.Main) {
                         view.showLoginError(message)
                     }
                 }
             } catch (e: Exception) {
+                Log.e("LoginPresenter", "Excepción: ${e.localizedMessage}")
                 withContext(Dispatchers.Main) {
                     view.showLoginError("Error: ${e.localizedMessage}")
                 }

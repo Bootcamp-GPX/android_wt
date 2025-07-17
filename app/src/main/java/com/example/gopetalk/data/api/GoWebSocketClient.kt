@@ -1,66 +1,68 @@
 package com.example.gopetalk.data.api
 
-import android.util.Log
-import okhttp3.Response
-import okhttp3.WebSocket
-import okhttp3.WebSocketListener
-import okio.ByteString
+import android.Manifest
+import android.media.AudioFormat
+import android.media.AudioRecord
+import android.media.MediaRecorder
+import androidx.annotation.RequiresPermission
+import kotlinx.coroutines.*
+import okhttp3.*
+import okio.ByteString.Companion.toByteString
 
-class GoWebSocketClient(private val userId: String) {
+class GoWebSocketClient(
+    private val userId: String,
+    private val listener: WebSocketListener
+) {
+    private var ws: WebSocket? = null
+    private var sendJob: Job? = null
+    private var audioRecord: AudioRecord? = null
 
-    private var webSocket: WebSocket? = null
-    private var currentChannel: String? = null
-
-    fun connect(channel: String, onReceive: (ByteArray) -> Unit) {
-        Log.d("GoWebSocketClient", "Intentando conectar al canal: $channel con userId: $userId")
-
-        disconnect() // Siempre asegurarse de cerrar conexión previa
-
-        webSocket = ApiClient.getWebSocket(userId, object : WebSocketListener() {
-            override fun onOpen(webSocket: WebSocket, response: Response) {
-                Log.d("GoWebSocketClient", "Conectado exitosamente al canal: $channel")
-                currentChannel = channel
-            }
-
-            override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
-                Log.d("GoWebSocketClient", "Mensaje de audio recibido (tamaño: ${bytes.size} bytes) desde canal: $channel")
-                onReceive(bytes.toByteArray())
-            }
-
-            override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-                Log.e("GoWebSocketClient", "Error en WebSocket del canal $channel", t)
-            }
-
-            override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
-                Log.w("GoWebSocketClient", "WebSocket cerrando: [$code] $reason en canal: $channel")
-            }
-
-            override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
-                Log.d("GoWebSocketClient", "WebSocket cerrado: [$code] $reason en canal: $channel")
-            }
-        })
+    fun connect(channelName: String) {
+        ws = ApiClient.getWebSocket(channelName, userId, listener)
     }
 
-    fun sendAudio(audio: ByteArray, receiverId: String) {
-        if (webSocket == null) {
-            Log.w("GoWebSocketClient", "Intento de enviar audio sin WebSocket conectado")
-            return
+    @RequiresPermission(Manifest.permission.RECORD_AUDIO)
+    fun startSending(onSent: () -> Unit) {
+        val sampleRate = 8000
+        val bufferSize = AudioRecord.getMinBufferSize(
+            sampleRate,
+            AudioFormat.CHANNEL_IN_MONO,
+            AudioFormat.ENCODING_PCM_16BIT
+        )
+
+        audioRecord = AudioRecord(
+            MediaRecorder.AudioSource.MIC,
+            sampleRate,
+            AudioFormat.CHANNEL_IN_MONO,
+            AudioFormat.ENCODING_PCM_16BIT,
+            bufferSize
+        )
+
+        audioRecord?.startRecording()
+
+        sendJob = CoroutineScope(Dispatchers.IO).launch {
+            val buffer = ByteArray(bufferSize)
+            while (isActive) {
+                val read = audioRecord?.read(buffer, 0, buffer.size) ?: -1
+                if (read > 0) {
+                    ws?.send(buffer.copyOf(read).toByteString())
+                    withContext(Dispatchers.Main) { onSent() }
+                }
+            }
         }
+    }
 
-        val receiverBytes = receiverId.padEnd(36).toByteArray() // OJO: el backend espera 36 bytes exactos
-        val combined = receiverBytes + audio
-
-        Log.d("GoWebSocketClient", "Enviando ${combined.size} bytes a $receiverId")
-        webSocket?.send(ByteString.of(*combined))
+    fun stopSending() {
+        sendJob?.cancel()
+        audioRecord?.stop()
+        audioRecord?.release()
+        audioRecord = null
     }
 
     fun disconnect() {
-        if (webSocket != null) {
-            Log.d("GoWebSocketClient", "Desconectando del canal: $currentChannel")
-            webSocket?.close(1000, "Desconexión solicitada por el cliente")
-            webSocket = null
-            currentChannel = null
-        }
+        ws?.close(1000, "Usuario salió del canal")
+        ws = null
     }
-}
 
+    fun getWebSocket(): WebSocket? = ws
+}

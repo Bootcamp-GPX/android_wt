@@ -39,7 +39,7 @@ class LoginActivity : AppCompatActivity(), LoginContract.View {
         val btnRegistrarse = findViewById<Button>(R.id.btnRegister)
 
         sessionManager = SessionManager(applicationContext)
-        presenter = LoginPresenter(this, ApiClient.getService(), sessionManager)
+        presenter = LoginPresenter(this, ApiClient.getAuthService(), sessionManager)
 
         presenter.checkSession()
 

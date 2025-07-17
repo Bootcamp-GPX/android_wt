@@ -2,16 +2,17 @@ package com.example.gopetalk.data.api
 
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.POST
 
 interface AuthService {
 
-    @POST("api/register")
+    @POST("/register")
     suspend fun register(@Body request: RegisterRequest): Response<RegisterResponse>
 
-    @POST("api/login")
+    @POST("/login")
     suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
 
-    @POST("api/logout")
+    @POST("/logout")
     suspend fun logout(): Response<LogoutResponse>
 }

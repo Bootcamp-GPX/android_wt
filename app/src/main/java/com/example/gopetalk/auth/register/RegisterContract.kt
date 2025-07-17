@@ -1,19 +1,22 @@
 package com.example.gopetalk.auth.register
 
 interface RegisterContract {
+
     interface View {
-        fun showMessage(message: String)
-        fun showRegisterFail(message: String)
+        fun showLoading()
+        fun hideLoading()
+        fun showSuccess(message: String)
+        fun showError(message: String)
+        fun resetForm()
     }
 
     interface Presenter {
         fun register(
             name: String,
-            last_name: String,
-            age: Int,
+            lastName: String,
             email: String,
             password: String,
-            confirm_password: String
+            confirmPassword: String
         )
     }
 }
