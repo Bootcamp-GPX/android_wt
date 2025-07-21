@@ -2,7 +2,21 @@
 <resources>
 
 
-    <style name="Theme.GopeTalk" parent="Theme.AppCompat.Light.NoActionBar" />
-    <style name="Theme.Registro_Gopetalk" parent="Theme.AppCompat.Light.NoActionBar" />
+    <style name="Theme.GopeTalk" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- Necesario para que los íconos de menú se muestren correctamente -->
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="colorPrimary">@color/purple_500</item>
+        <item name="colorPrimaryDark">@color/purple_700</item>
+        <item name="colorAccent">@color/teal_200</item>
+    </style>
+
+    <style name="Theme.Registro_Gopetalk" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="colorPrimary">@color/purple_500</item>
+        <item name="colorPrimaryDark">@color/purple_700</item>
+        <item name="colorAccent">@color/teal_200</item>
+    </style>
 
 </resources>

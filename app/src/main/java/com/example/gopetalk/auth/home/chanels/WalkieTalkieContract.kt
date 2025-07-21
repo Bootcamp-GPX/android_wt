@@ -16,15 +16,13 @@ interface WalkieTalkieContract {
     }
 
     interface Presenter {
-        fun connectToChannel(channel: Int)
         fun connectToChannelByName(channelName: String)
         fun disconnect()
-        fun startTalking(receiverId: String)
+        fun startTalking(channelName: String)
         fun stopTalking()
-        fun increaseChannel()
-        fun decreaseChannel()
         fun getCurrentChannel(): Int
     }
 }
+
 
 

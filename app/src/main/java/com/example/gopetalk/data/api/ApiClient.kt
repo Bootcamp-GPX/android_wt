@@ -1,6 +1,7 @@
 package com.example.gopetalk.data.api
 
 import android.content.Context
+import android.util.Log
 import com.example.gopetalk.data.storage.SessionManager
 import com.example.gopetalk.utils.Constants
 import okhttp3.OkHttpClient
@@ -37,8 +38,8 @@ object ApiClient {
     }
 
     private fun checkInit() {
-        if (!::retrofit.isInitialized || !::okHttpClient.isInitialized) {
-            throw IllegalStateException("ApiClient no inicializado. Llama a ApiClient.init(context) primero.")
+        if (!::retrofit.isInitialized || !::okHttpClient.isInitialized || !::sessionManager.isInitialized) {
+            throw IllegalStateException("⚠️ ApiClient no inicializado. Llama a ApiClient.init(context) primero.")
         }
     }
 
@@ -48,21 +49,23 @@ object ApiClient {
     }
 
     fun getChannelService(): ChannelService {
+        checkInit()
         return retrofit.create(ChannelService::class.java)
     }
 
     fun getWebSocket(channelName: String, userId: String, listener: WebSocketListener): WebSocket {
+        checkInit()
+
         val token = sessionManager.getAccessToken()
+        val url = Constants.WS_URL // ejemplo: "ws://159.203.187.94/ws"
 
-        val requestBuilder = Request.Builder()
-            .url(Constants.WS_URL)
+        val request = Request.Builder()
+            .url(url) // sin parámetros
+            .addHeader("Authorization", "Bearer $token") // igual que en Swift
+            .build()
 
-        // 🔐 Si el WebSocket requiere token, lo dejamos, si no, elimínalo.
-        if (!token.isNullOrEmpty()) {
-            requestBuilder.addHeader("Authorization", "Bearer $token")
-        }
+        Log.d("WebSocket", "Conectando con headers: Authorization: Bearer ${token?.take(10)}...")
 
-        return okHttpClient.newWebSocket(requestBuilder.build(), listener)
+        return okHttpClient.newWebSocket(request, listener)
     }
 }
-

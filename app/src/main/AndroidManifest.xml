@@ -3,14 +3,28 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.example.gopetalk">
 
+    <!-- Permisos esenciales -->
+    <uses-feature
+        android:name="android.hardware.microphone"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.bluetooth"
+        android:required="false" />
+
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    <!-- Permiso específico para audio en Android 13+ -->
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+
+    <!-- Android 13+ -->
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
-    <!-- Compatibilidad con versiones anteriores -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+
+    <!-- Compatibilidad para Android 12- -->
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
 
     <application
@@ -23,9 +37,11 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
+        android:attributionTags="walkieTalkie,GopeTalk"
         android:theme="@style/Theme.GopeTalk"
         tools:targetApi="31">
 
+        <!-- MainActivity -->
         <activity
             android:name=".auth.login.LoginActivity"
             android:exported="true"
@@ -37,14 +53,23 @@
             </intent-filter>
         </activity>
 
+        <!-- Registro -->
         <activity
             android:name=".auth.register.RegisterActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.Registro_Gopetalk" />
 
+        <!-- Home -->
         <activity
             android:name=".auth.home.HomeActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.GopeTalk" />
+
+        <!-- WalkieTalkie -->
+        <activity
+            android:name=".auth.home.chanels.WalkieTalkieActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.GopeTalk" />

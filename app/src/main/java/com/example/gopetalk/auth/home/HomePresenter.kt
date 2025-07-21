@@ -19,19 +19,19 @@ class HomePresenter(
             try {
                 val response = authService.logout()
                 if (response.isSuccessful) {
-                    Log.d("Logout", "Sesión cerrada en servidor")
+                    Log.d("Logout", "✅ Sesión cerrada en el servidor")
                 } else {
-                    Log.e("Logout", "Error al cerrar sesión: ${response.code()}")
+                    Log.e("Logout", "⚠️ Error al cerrar sesión: ${response.code()}")
                 }
-
             } catch (e: Exception) {
-                Log.e("Logout", "Error inesperado: ${e.localizedMessage}")
+                Log.e("Logout", "❌ Excepción en logout: ${e.localizedMessage}", e)
             }
 
+            // Siempre se limpia la sesión local
             sessionManager.clearSession()
 
             withContext(Dispatchers.Main) {
-                view.showLogoutMessage("Sesión cerrada")
+                view.showLogoutMessage("Sesión cerrada correctamente")
                 view.navigateToLogin()
             }
         }

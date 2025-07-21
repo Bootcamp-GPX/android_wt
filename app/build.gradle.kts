@@ -60,6 +60,7 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.leanback)
     implementation(libs.material)
+    implementation(libs.firebase.database.ktx)
 
     // Test
     testImplementation(libs.junit)

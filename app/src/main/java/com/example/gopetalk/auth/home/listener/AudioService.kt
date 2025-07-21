@@ -6,57 +6,54 @@ import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.util.Log
 import androidx.annotation.RequiresPermission
-import kotlinx.coroutines.*
-import okhttp3.WebSocket
-import okio.ByteString.Companion.toByteString
+import com.example.gopetalk.data.api.GoWebSocketClient
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 
-class AudioStreamingService {
-
+class AudioService {
     private var audioRecord: AudioRecord? = null
-    private var recordingJob: Job? = null
+    private var isRecording = false
+    private var job: Job? = null
 
-    private val sampleRate = 16000 // 16kHz (común para voz)
     private val bufferSize = AudioRecord.getMinBufferSize(
-        sampleRate,
+        16000,
         AudioFormat.CHANNEL_IN_MONO,
         AudioFormat.ENCODING_PCM_16BIT
     )
 
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
-    fun startStreaming(socket: WebSocket) {
-        if (audioRecord != null) return
-
+    fun startStreaming(socket: GoWebSocketClient) {
         audioRecord = AudioRecord(
             MediaRecorder.AudioSource.MIC,
-            sampleRate,
+            16000,
             AudioFormat.CHANNEL_IN_MONO,
             AudioFormat.ENCODING_PCM_16BIT,
             bufferSize
         )
 
+        isRecording = true
         audioRecord?.startRecording()
-        Log.d("AudioStreaming", "🎙️ Grabación iniciada")
+        Log.d("AudioService", "🎙️ Grabación iniciada")
 
-        recordingJob = CoroutineScope(Dispatchers.IO).launch {
+        job = CoroutineScope(Dispatchers.IO).launch {
             val buffer = ByteArray(bufferSize)
-
-            while (isActive) {
+            while (isRecording) {
                 val read = audioRecord?.read(buffer, 0, buffer.size) ?: 0
                 if (read > 0) {
-                    socket.send(buffer.toByteString()) // WebSocket lo manda como binario
+                    socket.send(buffer.copyOf(read))
                 }
             }
         }
     }
 
     fun stopStreaming() {
-        recordingJob?.cancel()
-        recordingJob = null
-
+        isRecording = false
+        job?.cancel()
         audioRecord?.stop()
         audioRecord?.release()
         audioRecord = null
-
-        Log.d("AudioStreaming", "🛑 Grabación detenida")
+        Log.d("AudioService", "🛑 Grabación detenida")
     }
 }

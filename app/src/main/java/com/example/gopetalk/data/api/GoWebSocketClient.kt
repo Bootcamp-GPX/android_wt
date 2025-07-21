@@ -1,68 +1,73 @@
 package com.example.gopetalk.data.api
 
-import android.Manifest
-import android.media.AudioFormat
-import android.media.AudioRecord
-import android.media.MediaRecorder
-import androidx.annotation.RequiresPermission
-import kotlinx.coroutines.*
-import okhttp3.*
-import okio.ByteString.Companion.toByteString
+import android.util.Log
+import com.example.gopetalk.auth.home.listener.GoWebSocketListener
+import okhttp3.WebSocket
+import okhttp3.WebSocketListener
+import okio.ByteString
 
 class GoWebSocketClient(
     private val userId: String,
-    private val listener: WebSocketListener
+    private val listener: GoWebSocketListener
 ) {
-    private var ws: WebSocket? = null
-    private var sendJob: Job? = null
-    private var audioRecord: AudioRecord? = null
 
-    fun connect(channelName: String) {
-        ws = ApiClient.getWebSocket(channelName, userId, listener)
+    private var webSocket: WebSocket? = null
+
+    fun connect(channel: String) {
+        webSocket = ApiClient.getWebSocket(channel, userId, object : WebSocketListener() {
+
+            override fun onOpen(ws: WebSocket, response: okhttp3.Response) {
+                Log.d("WebSocket", "✅ Conectado al canal: $channel")
+                val handshake = "{\"canal\":\"$channel\"}"
+                ws.send(handshake)
+            }
+
+            override fun onMessage(ws: WebSocket, text: String) {
+                Log.d("WebSocket", "📨 Texto recibido: $text")
+                listener.onTextMessageReceived(text)
+            }
+
+            override fun onMessage(ws: WebSocket, bytes: ByteString) {
+                Log.d("WebSocket", "🔊 Audio recibido (${bytes.size} bytes)")
+                listener.onAudioMessageReceived(bytes.toByteArray())
+            }
+
+            override fun onFailure(ws: WebSocket, t: Throwable, response: okhttp3.Response?) {
+                Log.e("WebSocket", "❌ Error: ${t.localizedMessage}", t)
+            }
+
+            override fun onClosing(ws: WebSocket, code: Int, reason: String) {
+                Log.d("WebSocket", "⚠️ Cerrando conexión: $code - $reason")
+                ws.close(code, reason)
+            }
+
+            override fun onClosed(ws: WebSocket, code: Int, reason: String) {
+                Log.d("WebSocket", "🔌 WebSocket cerrado: $code - $reason")
+            }
+        })
     }
 
-    @RequiresPermission(Manifest.permission.RECORD_AUDIO)
-    fun startSending(onSent: () -> Unit) {
-        val sampleRate = 8000
-        val bufferSize = AudioRecord.getMinBufferSize(
-            sampleRate,
-            AudioFormat.CHANNEL_IN_MONO,
-            AudioFormat.ENCODING_PCM_16BIT
-        )
-
-        audioRecord = AudioRecord(
-            MediaRecorder.AudioSource.MIC,
-            sampleRate,
-            AudioFormat.CHANNEL_IN_MONO,
-            AudioFormat.ENCODING_PCM_16BIT,
-            bufferSize
-        )
-
-        audioRecord?.startRecording()
-
-        sendJob = CoroutineScope(Dispatchers.IO).launch {
-            val buffer = ByteArray(bufferSize)
-            while (isActive) {
-                val read = audioRecord?.read(buffer, 0, buffer.size) ?: -1
-                if (read > 0) {
-                    ws?.send(buffer.copyOf(read).toByteString())
-                    withContext(Dispatchers.Main) { onSent() }
-                }
-            }
+    fun send(data: ByteArray) {
+        if (webSocket?.send(ByteString.of(*data)) == true) {
+            Log.d("WebSocket", "📤 Audio enviado (${data.size} bytes)")
+        } else {
+            Log.e("WebSocket", "❌ Fallo al enviar audio")
         }
     }
 
-    fun stopSending() {
-        sendJob?.cancel()
-        audioRecord?.stop()
-        audioRecord?.release()
-        audioRecord = null
+    fun send(message: String) {
+        if (webSocket?.send(message) == true) {
+            Log.d("WebSocket", "📤 Mensaje enviado: $message")
+        } else {
+            Log.e("WebSocket", "❌ Fallo al enviar mensaje")
+        }
     }
 
     fun disconnect() {
-        ws?.close(1000, "Usuario salió del canal")
-        ws = null
+        webSocket?.close(1000, "Desconectado por el usuario")
+        webSocket = null
+        Log.d("WebSocket", "🧹 WebSocket cerrado manualmente")
     }
 
-    fun getWebSocket(): WebSocket? = ws
+    fun getWebSocket(): WebSocket? = webSocket
 }
