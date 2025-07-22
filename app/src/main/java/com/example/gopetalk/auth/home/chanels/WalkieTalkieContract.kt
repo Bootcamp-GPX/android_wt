@@ -13,6 +13,7 @@ interface WalkieTalkieContract {
         fun getContextSafe(): Context
         fun setChannel(channel: Int)
         fun getChannel(): Int
+        fun setConnectedUsers(users: Int)
     }
 
     interface Presenter {

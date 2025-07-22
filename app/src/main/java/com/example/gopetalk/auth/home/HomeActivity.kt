@@ -41,7 +41,6 @@ class HomeActivity : AppCompatActivity(), HomeContract.View {
         setSupportActionBar(toolbar)
         toolbar.inflateMenu(R.menu.bottom_nav_menu)
 
-        // Acción del menú logout
         toolbar.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 R.id.logout -> {
@@ -65,7 +64,7 @@ class HomeActivity : AppCompatActivity(), HomeContract.View {
                     withContext(Dispatchers.Main) {
                         recycler.adapter = ChannelAdapter(channels) { selectedChannel ->
                             val intent = Intent(this@HomeActivity, WalkieTalkieActivity::class.java).apply {
-                                putExtra("channel", selectedChannel)
+                                putExtra("channel_name", selectedChannel)
                             }
                             startActivity(intent)
                         }
@@ -80,8 +79,9 @@ class HomeActivity : AppCompatActivity(), HomeContract.View {
     }
 
     override fun navigateToLogin() {
-        val intent = Intent(this, LoginActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        val intent = Intent(this, LoginActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
         startActivity(intent)
         finish()
     }
@@ -104,7 +104,6 @@ class HomeActivity : AppCompatActivity(), HomeContract.View {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.logout -> {
-                // Acción al cerrar sesión
                 Toast.makeText(this, "Sesión cerrada", Toast.LENGTH_SHORT).show()
                 true
             }

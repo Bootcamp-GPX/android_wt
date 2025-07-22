@@ -46,9 +46,14 @@ class WalkieTalkieActivity : AppCompatActivity(), WalkieTalkieContract.View {
             AudioPlaybackService()
         )
 
-        val channelName = intent.getStringExtra("channel_name") ?: "canal-1"
-        presenter.connectToChannelByName(channelName)
+        val channelName = intent.getStringExtra("channel_name")
+        if (channelName.isNullOrBlank()) {
+            Toast.makeText(this, "❌ Canal no recibido. Cerrando...", Toast.LENGTH_LONG).show()
+            finish()
+            return
+        }
 
+        presenter.connectToChannelByName(channelName)
         setupTouchEvents()
     }
 
@@ -76,7 +81,7 @@ class WalkieTalkieActivity : AppCompatActivity(), WalkieTalkieContract.View {
             if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
                 Toast.makeText(this, "🎙️ Permiso de audio concedido", Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(this, "🚫 Se requiere permiso de micrófono para usar el walkie-talkie", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "🚫 Se requiere permiso de micrófono", Toast.LENGTH_LONG).show()
                 finish()
             }
         }
@@ -100,26 +105,18 @@ class WalkieTalkieActivity : AppCompatActivity(), WalkieTalkieContract.View {
 
     override fun onTalkingStarted() {
         runOnUiThread {
-            btnTalk.text = "Hablando..."
-            btnTalk.setBackgroundColor(ContextCompat.getColor(this, android.R.color.holo_red_dark))
+            btnTalk.text = "\uD83C\uDF99\uFE0F"
         }
     }
 
     override fun onTalkingStopped() {
         runOnUiThread {
-            btnTalk.text = "Hablar"
-            btnTalk.setBackgroundColor(ContextCompat.getColor(this, android.R.color.holo_blue_dark))
+            btnTalk.text = "\uD83D\uDD07"
         }
     }
 
-    override fun onAudioReceived(data: ByteArray) {
-        // Ya lo maneja el WebSocketListener con playbackService
-    }
-
-    override fun onAudioSent() {
-        // No implementado por ahora
-    }
-
+    override fun onAudioReceived(data: ByteArray) {}
+    override fun onAudioSent() {}
     override fun showError(message: String) {
         runOnUiThread {
             Toast.makeText(this, "❌ $message", Toast.LENGTH_SHORT).show()
@@ -133,15 +130,18 @@ class WalkieTalkieActivity : AppCompatActivity(), WalkieTalkieContract.View {
     }
 
     override fun getContextSafe(): Context = this
-
-    override fun setChannel(channel: Int) {
-        currentChannel = channel
-    }
-
+    override fun setChannel(channel: Int) { currentChannel = channel }
     override fun getChannel(): Int = currentChannel
 
     override fun onDestroy() {
         presenter.disconnect()
         super.onDestroy()
+    }
+
+    override fun setConnectedUsers(users: Int) {
+        runOnUiThread{
+            val usersText = findViewById<TextView>(R.id.connectedUsersText)
+            usersText.text = "Conectados: $users"
+        }
     }
 }

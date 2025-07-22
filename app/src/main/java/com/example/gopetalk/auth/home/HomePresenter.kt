@@ -27,7 +27,6 @@ class HomePresenter(
                 Log.e("Logout", "❌ Excepción en logout: ${e.localizedMessage}", e)
             }
 
-            // Siempre se limpia la sesión local
             sessionManager.clearSession()
 
             withContext(Dispatchers.Main) {

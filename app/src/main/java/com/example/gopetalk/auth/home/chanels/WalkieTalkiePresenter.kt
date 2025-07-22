@@ -7,7 +7,14 @@ import androidx.core.content.ContextCompat
 import com.example.gopetalk.auth.home.listener.AudioPlaybackService
 import com.example.gopetalk.auth.home.listener.AudioService
 import com.example.gopetalk.auth.home.listener.GoWebSocketListener
+import com.example.gopetalk.data.api.ApiClient
 import com.example.gopetalk.data.api.GoWebSocketClient
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class WalkieTalkiePresenter(
     private val view: WalkieTalkieContract.View,
@@ -20,36 +27,63 @@ class WalkieTalkiePresenter(
     private var isConnected = false
     private var client: GoWebSocketClient? = null
     private var currentChannelName: String = ""
+    private var pollingJob: Job? = null
 
     override fun connectToChannelByName(channelName: String) {
-        disconnect()
+        CoroutineScope(Dispatchers.IO).launch {
+            val response = ApiClient.getChannelService().getChannelUsers(channelName)
 
-        if (!channelName.startsWith("canal-")) {
-            view.showError("Canal inválido: $channelName")
-            return
-        }
-
-        val listener = object : GoWebSocketListener {
-            override fun onAudioMessageReceived(data: ByteArray) {
-                playbackService.play(data)
-            }
-
-            override fun onTextMessageReceived(message: String) {
-                if (message == "STOP") {
-                    stopTalking()
+            withContext(Dispatchers.Main) {
+                if (!channelName.startsWith("canal-")) {
+                    view.showError("Canal inválido: $channelName")
+                    return@withContext
                 }
+
+                if (response.isSuccessful) {
+                    val users = response.body() ?: emptyList()
+
+                    //con esta funcion sabemos cuantos usuarios estan en el mismo canal en el que estamos nosotros
+                    view.setConnectedUsers(users.size)
+
+                    //aca verificamos si el canal esta lleno
+                    if (users.size >= 5) {
+                        view.showError("El canal está lleno (5 usuarios máximo)")
+                        return@withContext
+                    }
+                } else {
+                    view.showError("No se pudo verificar el canal: ${response.code()}")
+                    return@withContext
+                }
+
+                // Si pasó todas las validaciones anteriores, conectamos al canal
+                disconnect()
+
+                val listener = object : GoWebSocketListener {
+                    override fun onAudioMessageReceived(data: ByteArray) {
+                        playbackService.play(data)
+                    }
+
+                    override fun onTextMessageReceived(message: String) {
+                        if (message == "STOP") {
+                            stopTalking()
+                        }
+                    }
+                }
+
+                client = GoWebSocketClient(userId, listener)
+                client?.connect(channelName)
+
+                isConnected = true
+                currentChannelName = channelName
+
+                val channelNumber = Regex("canal-(\\d+)")
+                    .find(channelName)?.groupValues?.get(1)?.toIntOrNull() ?: 1
+                view.setChannel(channelNumber)
+                view.updateStatus("Conectado al $channelName")
+
+                startPollingUserCount(channelName)
             }
         }
-
-        client = GoWebSocketClient(userId, listener)
-        client?.connect(channelName)
-
-        isConnected = true
-        currentChannelName = channelName
-        val channelNumber = Regex("canal-(\\d+)").find(channelName)?.groupValues?.get(1)?.toIntOrNull() ?: 1
-        view.setChannel(channelNumber)
-
-        view.updateStatus("Conectado al canal $channelName")
     }
 
     override fun disconnect() {
@@ -57,6 +91,7 @@ class WalkieTalkiePresenter(
 
         stopTalking()
         client?.disconnect()
+        stopPollingUserCount()
         client = null
         isConnected = false
         view.updateStatus("Desconectado")
@@ -107,5 +142,37 @@ class WalkieTalkiePresenter(
 
     override fun getCurrentChannel(): Int {
         return Regex("canal-(\\d+)").find(currentChannelName)?.groupValues?.get(1)?.toIntOrNull() ?: 1
+    }
+
+    private fun startPollingUserCount(channelName: String) {
+        pollingJob?.cancel()
+        pollingJob = CoroutineScope(Dispatchers.IO).launch {
+            while (isConnected) {
+                try {
+                    val response = ApiClient.getChannelService().getChannelUsers(channelName)
+                    if (response.isSuccessful) {
+                        val users = response.body() ?: emptyList()
+                        withContext(Dispatchers.Main) {
+                            view.setConnectedUsers(users.size)
+                        }
+                    } else {
+                        Log.e("Polling", "Respuesta fallida: ${response.code()}")
+                    }
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        view.showError("Error al obtener usuarios conectados: ${e.message}")
+                        Log.e("Polling", "Excepción: ${e.message}")
+                    }
+                }
+
+                // Esperar siempre, haya éxito o error
+                delay(5000)
+            }
+        }
+    }
+
+    private fun stopPollingUserCount() {
+        pollingJob?.cancel()
+        pollingJob = null
     }
 }

@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-07-15T18:40:43.117861786Z">
+        <DropdownSelection timestamp="2025-07-22T19:14:34.325832964Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="LocalEmulator" identifier="path=/home/gopenux/.android/avd/Pixel_8.avd" />
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=T4QCPJYH6P4PNNOF" />
             </handle>
           </Target>
         </DropdownSelection>

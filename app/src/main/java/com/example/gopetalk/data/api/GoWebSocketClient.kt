@@ -5,6 +5,7 @@ import com.example.gopetalk.auth.home.listener.GoWebSocketListener
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import okio.ByteString
+import org.json.JSONObject
 
 class GoWebSocketClient(
     private val userId: String,
@@ -18,8 +19,17 @@ class GoWebSocketClient(
 
             override fun onOpen(ws: WebSocket, response: okhttp3.Response) {
                 Log.d("WebSocket", "✅ Conectado al canal: $channel")
-                val handshake = "{\"canal\":\"$channel\"}"
-                ws.send(handshake)
+
+                try {
+                    val json = JSONObject().apply {
+                        put("canal", channel)
+                    }
+                    val mensaje = json.toString()
+                    Log.d("WebSocket", "📤 Enviando canal: $mensaje")
+                    ws.send(mensaje)
+                } catch (e: Exception) {
+                    Log.e("WebSocket", "❌ Error al enviar canal", e)
+                }
             }
 
             override fun onMessage(ws: WebSocket, text: String) {

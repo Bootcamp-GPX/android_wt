@@ -28,6 +28,6 @@ class AudioPlaybackService {
         }
         player.play()
         player.write(data, 0, data.size)
-        player.flush()
+        //player.flush()
     }
 }
