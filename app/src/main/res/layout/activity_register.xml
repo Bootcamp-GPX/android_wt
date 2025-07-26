@@ -17,7 +17,7 @@
                     android:padding="15dp"
                     android:background="#8000D9"
                     android:letterSpacing="0.05"
-                    android:text="GopeText"
+                    android:text="GopeTalk"
                     android:textAlignment="center"
                     android:textAllCaps="true"
                     android:textSize="20sp"

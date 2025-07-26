@@ -5,7 +5,7 @@ import android.media.AudioManager
 import android.media.AudioTrack
 import android.util.Log
 
-class AudioPlaybackService {
+open class AudioPlaybackService {
     private val bufferSize = AudioTrack.getMinBufferSize(
         16000,
         AudioFormat.CHANNEL_OUT_MONO,

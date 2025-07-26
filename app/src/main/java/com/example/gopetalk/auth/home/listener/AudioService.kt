@@ -12,18 +12,18 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
-class AudioService {
+open class AudioService : IAudioService {
     private var audioRecord: AudioRecord? = null
     private var isRecording = false
     private var job: Job? = null
 
-    private val bufferSize = 2048 * 2 // 4096 bytes = 2048 frames (16-bit mono)
+    private val bufferSize = 2048 * 2
 
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
-    fun startStreaming(socket: GoWebSocketClient) {
+    override fun startStreaming(socket: GoWebSocketClient) {
         audioRecord = AudioRecord(
             MediaRecorder.AudioSource.MIC,
-            16000, // Frecuencia que iOS espera
+            16000,
             AudioFormat.CHANNEL_IN_MONO,
             AudioFormat.ENCODING_PCM_16BIT,
             bufferSize
@@ -42,7 +42,6 @@ class AudioService {
                 } else if (read > 0) {
                     val fixedBuffer = ByteArray(bufferSize)
                     System.arraycopy(buffer, 0, fixedBuffer, 0, read)
-                    // Rellenamos con ceros el resto
                     for (i in read until bufferSize) {
                         fixedBuffer[i] = 0
                     }
@@ -53,7 +52,7 @@ class AudioService {
         }
     }
 
-    fun stopStreaming() {
+    override fun stopStreaming() {
         isRecording = false
         job?.cancel()
         audioRecord?.stop()
@@ -62,3 +61,4 @@ class AudioService {
         Log.d("AudioService", "🛑 Grabación detenida")
     }
 }
+

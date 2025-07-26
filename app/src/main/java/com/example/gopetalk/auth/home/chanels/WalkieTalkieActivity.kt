@@ -12,14 +12,17 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.gopetalk.R
+import com.example.gopetalk.auth.DefaultLogger
 import com.example.gopetalk.auth.home.listener.AudioPlaybackService
 import com.example.gopetalk.auth.home.listener.AudioService
 import com.example.gopetalk.data.storage.SessionManager
+import com.example.gopetalk.auth.Logger
+
 
 class WalkieTalkieActivity : AppCompatActivity(), WalkieTalkieContract.View {
 
     private lateinit var presenter: WalkieTalkieContract.Presenter
-    private lateinit var btnTalk: Button
+    private lateinit var btnTalk: Button 
     private lateinit var statusText: TextView
 
     private var currentChannel = 1
@@ -43,7 +46,8 @@ class WalkieTalkieActivity : AppCompatActivity(), WalkieTalkieContract.View {
             this,
             userId,
             AudioService(),
-            AudioPlaybackService()
+            AudioPlaybackService(),
+            DefaultLogger()
         )
 
         val channelName = intent.getStringExtra("channel_name")

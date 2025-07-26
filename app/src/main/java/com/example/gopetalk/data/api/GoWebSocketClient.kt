@@ -9,12 +9,12 @@ import org.json.JSONObject
 
 class GoWebSocketClient(
     private val userId: String,
-    private val listener: GoWebSocketListener
-) {
+    private val listener: com.example.gopetalk.auth.home.listener.GoWebSocketListener
+) : IWebSocketClient {
 
     private var webSocket: WebSocket? = null
 
-    fun connect(channel: String) {
+    override fun connect(channel: String) {
         webSocket = ApiClient.getWebSocket(channel, userId, object : WebSocketListener() {
 
             override fun onOpen(ws: WebSocket, response: okhttp3.Response) {
@@ -57,7 +57,7 @@ class GoWebSocketClient(
         })
     }
 
-    fun send(data: ByteArray) {
+    override fun send(data: ByteArray) {
         if (webSocket?.send(ByteString.of(*data)) == true) {
             Log.d("WebSocket", "📤 Audio enviado (${data.size} bytes)")
         } else {
@@ -65,7 +65,7 @@ class GoWebSocketClient(
         }
     }
 
-    fun send(message: String) {
+    override fun send(message: String) {
         if (webSocket?.send(message) == true) {
             Log.d("WebSocket", "📤 Mensaje enviado: $message")
         } else {
@@ -73,11 +73,11 @@ class GoWebSocketClient(
         }
     }
 
-    fun disconnect() {
+    override fun disconnect() {
         webSocket?.close(1000, "Desconectado por el usuario")
         webSocket = null
         Log.d("WebSocket", "🧹 WebSocket cerrado manualmente")
     }
 
-    fun getWebSocket(): WebSocket? = webSocket
+    override fun getWebSocket(): WebSocket? = webSocket
 }

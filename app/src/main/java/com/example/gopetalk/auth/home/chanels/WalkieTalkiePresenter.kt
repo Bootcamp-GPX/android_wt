@@ -4,23 +4,24 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.util.Log
 import androidx.core.content.ContextCompat
+import com.example.gopetalk.auth.DefaultPermissionChecker
+import com.example.gopetalk.auth.Logger
+import com.example.gopetalk.auth.PermissionChecker
 import com.example.gopetalk.auth.home.listener.AudioPlaybackService
 import com.example.gopetalk.auth.home.listener.AudioService
 import com.example.gopetalk.auth.home.listener.GoWebSocketListener
+import com.example.gopetalk.auth.home.listener.IAudioService
 import com.example.gopetalk.data.api.ApiClient
 import com.example.gopetalk.data.api.GoWebSocketClient
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 
 class WalkieTalkiePresenter(
     private val view: WalkieTalkieContract.View,
     private val userId: String,
     private val audioService: AudioService,
-    private val playbackService: AudioPlaybackService
+    private val playbackService: AudioPlaybackService,
+    private val logger: Logger,
+    private val permissionChecker: PermissionChecker = DefaultPermissionChecker()
 ) : WalkieTalkieContract.Presenter {
 
     private var isTalking = false
@@ -41,11 +42,8 @@ class WalkieTalkiePresenter(
 
                 if (response.isSuccessful) {
                     val users = response.body() ?: emptyList()
-
-                    //con esta funcion sabemos cuantos usuarios estan en el mismo canal en el que estamos nosotros
                     view.setConnectedUsers(users.size)
 
-                    //aca verificamos si el canal esta lleno
                     if (users.size >= 5) {
                         view.showError("El canal está lleno (5 usuarios máximo)")
                         return@withContext
@@ -55,7 +53,6 @@ class WalkieTalkiePresenter(
                     return@withContext
                 }
 
-                // Si pasó todas las validaciones anteriores, conectamos al canal
                 disconnect()
 
                 val listener = object : GoWebSocketListener {
@@ -98,7 +95,7 @@ class WalkieTalkiePresenter(
     }
 
     override fun startTalking(receiverId: String) {
-        Log.d("WalkieTalkiePresenter", "Intentando empezar a hablar...")
+        logger.log("WalkieTalkiePresenter", "Intentando empezar a hablar...")
 
         if (!isConnected) {
             view.showError("No estás conectado a ningún canal")
@@ -108,8 +105,7 @@ class WalkieTalkiePresenter(
         if (isTalking) return
 
         val context = view.getContextSafe()
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)
-            != PackageManager.PERMISSION_GRANTED) {
+        if (!permissionChecker.hasMicPermission(context)) {
             view.showError("Permiso de micrófono denegado")
             return
         }
@@ -120,12 +116,18 @@ class WalkieTalkiePresenter(
             return
         }
 
-        isTalking = true
-        socket.send("START")
-        audioService.startStreaming(client!!)
+        try {
+            audioService.startStreaming(client!!)
+            Log.d("AudioService", "🎙️ Grabación iniciada")
+        } catch (e: SecurityException) {
+            logger.log("AudioService", "🚫 No se pudo iniciar la grabación: ${e.message}")
+            view.showError("No se pudo iniciar el audio: ${e.message}")
+            return
+        }
+
 
         view.onTalkingStarted()
-        Log.d("WalkieTalkiePresenter", "🎤 START enviado")
+        logger.log("WalkieTalkiePresenter", "🎤 START enviado")
     }
 
     override fun stopTalking() {
@@ -133,11 +135,11 @@ class WalkieTalkiePresenter(
         isTalking = false
 
         client?.getWebSocket()?.send("STOP")
-            ?: Log.e("WalkieTalkiePresenter", "❌ No se pudo enviar STOP")
+            ?: logger.log("WalkieTalkiePresenter", "❌ No se pudo enviar STOP")
 
         audioService.stopStreaming()
         view.onTalkingStopped()
-        Log.d("WalkieTalkiePresenter", "🛑 STOP enviado y streaming detenido")
+        logger.log("WalkieTalkiePresenter", "🛑 STOP enviado y streaming detenido")
     }
 
     override fun getCurrentChannel(): Int {
@@ -156,16 +158,15 @@ class WalkieTalkiePresenter(
                             view.setConnectedUsers(users.size)
                         }
                     } else {
-                        Log.e("Polling", "Respuesta fallida: ${response.code()}")
+                        logger.log("Polling", "Respuesta fallida: ${response.code()}")
                     }
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
                         view.showError("Error al obtener usuarios conectados: ${e.message}")
-                        Log.e("Polling", "Excepción: ${e.message}")
+                        logger.log("Polling", "Excepción: ${e.message}")
                     }
                 }
 
-                // Esperar siempre, haya éxito o error
                 delay(5000)
             }
         }
