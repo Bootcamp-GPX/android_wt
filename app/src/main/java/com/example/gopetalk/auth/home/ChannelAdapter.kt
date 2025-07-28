@@ -19,7 +19,7 @@ class ChannelAdapter(
         fun bind(name: String) {
             channelName.text = name
             itemView.setOnClickListener {
-                Log.d("ChannelAdapter", "🖱️ Canal seleccionado: $name")
+                Log.d("ChannelAdapter", "Canal seleccionado: $name")
                 onClick(name)
             }
         }

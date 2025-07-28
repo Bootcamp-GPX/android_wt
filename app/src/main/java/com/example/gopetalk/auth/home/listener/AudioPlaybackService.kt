@@ -13,7 +13,7 @@ class AudioPlaybackService {
     )
 
     private val player = AudioTrack(
-        AudioManager.STREAM_VOICE_CALL,
+        AudioManager.STREAM_MUSIC,
         16000,
         AudioFormat.CHANNEL_OUT_MONO,
         AudioFormat.ENCODING_PCM_16BIT,

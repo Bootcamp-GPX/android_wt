@@ -48,7 +48,7 @@ class WalkieTalkieActivity : AppCompatActivity(), WalkieTalkieContract.View {
 
         val channelName = intent.getStringExtra("channel_name")
         if (channelName.isNullOrBlank()) {
-            Toast.makeText(this, "❌ Canal no recibido. Cerrando...", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Canal no recibido. Cerrando...", Toast.LENGTH_LONG).show()
             finish()
             return
         }
@@ -79,9 +79,9 @@ class WalkieTalkieActivity : AppCompatActivity(), WalkieTalkieContract.View {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == RECORD_AUDIO_REQUEST_CODE) {
             if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                Toast.makeText(this, "🎙️ Permiso de audio concedido", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Permiso de audio concedido", Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(this, "🚫 Se requiere permiso de micrófono", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Se requiere permiso de micrófono", Toast.LENGTH_LONG).show()
                 finish()
             }
         }
@@ -119,7 +119,7 @@ class WalkieTalkieActivity : AppCompatActivity(), WalkieTalkieContract.View {
     override fun onAudioSent() {}
     override fun showError(message: String) {
         runOnUiThread {
-            Toast.makeText(this, "❌ $message", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "$message", Toast.LENGTH_SHORT).show()
         }
     }
 

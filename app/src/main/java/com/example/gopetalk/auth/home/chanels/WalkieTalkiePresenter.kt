@@ -125,7 +125,7 @@ class WalkieTalkiePresenter(
         audioService.startStreaming(client!!)
 
         view.onTalkingStarted()
-        Log.d("WalkieTalkiePresenter", "🎤 START enviado")
+        Log.d("WalkieTalkiePresenter", "START enviado")
     }
 
     override fun stopTalking() {
@@ -133,16 +133,16 @@ class WalkieTalkiePresenter(
         isTalking = false
 
         client?.getWebSocket()?.send("STOP")
-            ?: Log.e("WalkieTalkiePresenter", "❌ No se pudo enviar STOP")
+            ?: Log.e("WalkieTalkiePresenter", "No se pudo enviar STOP")
 
         audioService.stopStreaming()
         view.onTalkingStopped()
-        Log.d("WalkieTalkiePresenter", "🛑 STOP enviado y streaming detenido")
+        Log.d("WalkieTalkiePresenter", "STOP enviado y streaming detenido")
     }
 
-    override fun getCurrentChannel(): Int {
+    /**override fun getCurrentChannel(): Int {
         return Regex("canal-(\\d+)").find(currentChannelName)?.groupValues?.get(1)?.toIntOrNull() ?: 1
-    }
+    }**/
 
     private fun startPollingUserCount(channelName: String) {
         pollingJob?.cancel()

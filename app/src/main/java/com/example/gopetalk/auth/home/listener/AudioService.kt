@@ -17,13 +17,13 @@ class AudioService {
     private var isRecording = false
     private var job: Job? = null
 
-    private val bufferSize = 2048 * 2 // 4096 bytes = 2048 frames (16-bit mono)
+    private val bufferSize = 2048 * 2 // 4096 bytes = 2048 frames
 
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     fun startStreaming(socket: GoWebSocketClient) {
         audioRecord = AudioRecord(
             MediaRecorder.AudioSource.MIC,
-            16000, // Frecuencia que iOS espera
+            16000, // Frecuencia que carlos espera
             AudioFormat.CHANNEL_IN_MONO,
             AudioFormat.ENCODING_PCM_16BIT,
             bufferSize
@@ -31,7 +31,7 @@ class AudioService {
 
         isRecording = true
         audioRecord?.startRecording()
-        Log.d("AudioService", "🎙️ Grabación iniciada")
+        Log.d("AudioService", " Grabación iniciada")
 
         job = CoroutineScope(Dispatchers.IO).launch {
             val buffer = ByteArray(bufferSize)
@@ -42,12 +42,13 @@ class AudioService {
                 } else if (read > 0) {
                     val fixedBuffer = ByteArray(bufferSize)
                     System.arraycopy(buffer, 0, fixedBuffer, 0, read)
+
                     // Rellenamos con ceros el resto
                     for (i in read until bufferSize) {
                         fixedBuffer[i] = 0
                     }
                     socket.send(fixedBuffer)
-                    Log.w("AudioService", "⚠️ Enviado buffer incompleto de $read bytes, rellenado")
+                    Log.w("AudioService", "Enviado buffer incompleto de $read bytes, rellenado")
                 }
             }
         }
@@ -59,6 +60,6 @@ class AudioService {
         audioRecord?.stop()
         audioRecord?.release()
         audioRecord = null
-        Log.d("AudioService", "🛑 Grabación detenida")
+        Log.d("AudioService", "Grabación detenida")
     }
 }

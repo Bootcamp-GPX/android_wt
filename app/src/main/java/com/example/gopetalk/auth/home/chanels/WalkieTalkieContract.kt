@@ -21,7 +21,7 @@ interface WalkieTalkieContract {
         fun disconnect()
         fun startTalking(channelName: String)
         fun stopTalking()
-        fun getCurrentChannel(): Int
+        //fun getCurrentChannel(): Int
     }
 }
 
